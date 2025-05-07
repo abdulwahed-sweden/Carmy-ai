@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}البحث حسب كود العطل{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">البحث حسب كود العطل</h1>
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{% url 'car_diagnostics:error_search' %}" class="row g-3">
+                <div class="col-md-4">
+                    <label for="obd_code" class="form-label">كود العطل</label>
+                    <input type="text" name="obd_code" id="obd_code" class="form-control" placeholder="مثال: P0300" value="{{ request.GET.obd_code|default:'' }}">
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="category" class="form-label">فئة العطل</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">-- اختر --</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:'i' %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="severity" class="form-label">خطورة العطل</label>
+                    <select name="severity" id="severity" class="form-select">
+                        <option value="">-- اختر --</option>
+                        <option value="LOW" {% if request.GET.severity == 'LOW' %}selected{% endif %}>منخفضة</option>
+                        <option value="MEDIUM" {% if request.GET.severity == 'MEDIUM' %}selected{% endif %}>متوسطة</option>
+                        <option value="HIGH" {% if request.GET.severity == 'HIGH' %}selected{% endif %}>عالية</option>
+                        <option value="CRITICAL" {% if request.GET.severity == 'CRITICAL' %}selected{% endif %}>حرجة</option>
+                    </select>
+                </div>
+                
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">بحث</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if error_codes %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>كود العطل</th>
+                    <th>الوصف</th>
+                    <th>الفئة</th>
+                    <th>الخطورة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for code in error_codes %}
+                <tr>
+                    <td>{{ code.obd_code }}</td>
+                    <td>{{ code.description }}</td>
+                    <td>{{ code.category.name }}</td>
+                    <td>
+                        <span class="badge {% if code.severity == 'LOW' %}bg-info{% elif code.severity == 'MEDIUM' %}bg-warning{% elif code.severity == 'HIGH' %}bg-danger{% else %}bg-dark{% endif %}">
+                            {{ code.get_severity_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'car_diagnostics:error_detail' code.id %}" class="btn btn-sm btn-primary">التفاصيل</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% elif request.GET %}
+    <div class="alert alert-info">
+        لم يتم العثور على أكواد أعطال مطابقة للبحث.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

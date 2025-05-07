@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ماسح أكواد OBD-II{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">ماسح أكواد OBD-II</h1>
+    
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">توصيل جهاز OBD-II</h5>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle me-2"></i>
+                        لاستخدام هذه الميزة، تحتاج إلى جهاز OBD-II متوافق مع البلوتوث.
+                    </div>
+                    
+                    <p class="card-text">
+                        يمكنك توصيل جهاز OBD-II مباشرةً بسيارتك والحصول على قراءة فورية لأكواد الأعطال ومعلومات التشخيص.
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <button id="connectButton" class="btn btn-primary">
+                            <i class="bi bi-bluetooth me-2"></i> اتصال بالجهاز
+                        </button>
+                        
+                        <div id="connectionStatus" class="badge bg-secondary">غير متصل</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="scanSection" class="card shadow-sm mb-4 d-none">
+                <div class="card-body">
+                    <h5 class="card-title">اختر السيارة</h5>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="carSelector" class="form-label">السيارة</label>
+                            <select id="carSelector" class="form-select">
+                                <option value="">-- اختر --</option>
+                                <!-- Will be populated via JavaScript -->
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <button id="scanButton" class="btn btn-success" disabled>
+                                <i class="bi bi-search me-2"></i> بدء الفحص
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="resultsSection" class="card shadow-sm d-none">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">نتائج الفحص</h3>
+                </div>
+                <div class="card-body">
+                    <div id="loadingResults" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">جاري التحميل...</span>
+                        </div>
+                        <p class="mt-2">جاري تحليل أكواد الأعطال...</p>
+                    </div>
+                    
+                    <div id="scanResults" class="d-none">
+                        <!-- Results will be loaded here via JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // For demo purposes, we'll simulate OBD scanning
+    // In a real implementation, you would use Web Bluetooth API to connect to an OBD device
+    
+    document.getElementById('connectButton').addEventListener('click', function() {
+        // Simulate connecting to device
+        const connectionStatus = document.getElementById('connectionStatus');
+        
+        connectionStatus.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري الاتصال...';
+        connectionStatus.className = 'badge bg-warning';
+        
+        setTimeout(() => {
+            connectionStatus.innerText = 'متصل';
+            connectionStatus.className = 'badge bg-success';
+            
+            // Show car selector
+            document.getElementById('scanSection').classList.remove('d-none');
+            
+            // Fetch cars for demo
+            fetchCars();
+        }, 2000);
+    });
+    
+    async function fetchCars() {
+        try {
+            const response = await fetch('{% url "car_diagnostics:api-root" %}cars/');
+            const data = await response.json();
+            
+            const carSelector = document.getElementById('carSelector');
+            carSelector.innerHTML = '<option value="">-- اختر --</option>';
+            
+            data.forEach(car => {
+                const option = document.createElement('option');
+                option.value = car.id;
+                option.textContent = `${car.brand_name} ${car.model} ${car.year}`;
+                carSelector.appendChild(option);
+            });
+            
+            // Enable scan button when car selected
+            carSelector.addEventListener('change', function() {
+                document.getElementById('scanButton').disabled = !this.value;
+            });
+        } catch (error) {
+            console.error('Error fetching cars:', error);
+            alert('حدث خطأ أثناء جلب قائمة السيارات');
+        }
+    }
+    
+    document.getElementById('scanButton').addEventListener('click', async function() {
+        const carId = document.getElementById('carSelector').value;
+        
+        if (!carId) {
+            alert('يرجى اختيار سيارة أولاً');
+            return;
+        }
+        
+        // Show results section with loading
+        const resultsSection = document.getElementById('resultsSection');
+        const loadingResults = document.getElementById('loadingResults');
+        const scanResults = document.getElementById('scanResults');
+        
+        resultsSection.classList.remove('d-none');
+        loadingResults.classList.remove('d-none');
+        scanResults.classList.add('d-none');
+        
+        try {
+            // Simulate OBD scanning by calling the simulator API
+            const response = await fetch('{% url "car_diagnostics:obd_simulator" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    car_id: carId,
+                    simulate_type: 'random'
+                })
+            });
+            
+            const simData = await response.json();
+            
+            // Now get diagnostic information for the codes
+            const diagResponse = await fetch('{% url "car_diagnostics:obd_data" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    car_id: carId,
+                    obd_codes: simData.obd_codes
+                })
+            });
+            
+            const diagData = await diagResponse.json();
+            
+            // Display results
+            displayResults(diagData);
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء فحص السيارة. يرجى المحاولة مرة أخرى.');
+            resultsSection.classList.add('d-none');
+        }
+    });
+    
+    function displayResults(data) {
+        const loadingResults = document.getElementById('loadingResults');
+        const scanResults = document.getElementById('scanResults');
+        
+        let resultsHTML = '';
+        
+        resultsHTML += `
+            <div class="alert alert-info">
+                <strong>السيارة:</strong> ${data.car.brand} ${data.car.model} ${data.car.year}
+            </div>
+        `;
+        
+        if (data.diagnostics.length > 0) {
+            data.diagnostics.forEach(diag => {
+                const severityClass = diag.severity === 'HIGH' ? 'danger' : 
+                                    diag.severity === 'MEDIUM' ? 'warning' : 'info';
+                
+                resultsHTML += `
+                    <div class="card mb-3 border-${severityClass}">
+                        <div class="card-header bg-${severityClass} text-white">
+                            <h5 class="mb-0">${diag.code} - ${diag.description}</h5>
+                        </div>
+                        <div class="card-body">
+                `;
+                
+                if (diag.common_causes) {
+                    resultsHTML += `<p><strong>الأسباب المحتملة:</strong> ${diag.common_causes}</p>`;
+                }
+                
+                if (diag.solutions) {
+                    resultsHTML += `<p><strong>الحلول المقترحة:</strong> ${diag.solutions}</p>`;
+                }
+                
+                if (diag.repair_steps) {
+                    resultsHTML += `<p><strong>خطوات الإصلاح:</strong> ${diag.repair_steps}</p>`;
+                }
+                
+                if (diag.estimated_cost) {
+                    resultsHTML += `<p><strong>التكلفة التقديرية:</strong> ${diag.estimated_cost}</p>`;
+                }
+                
+                if (diag.emergency_action) {
+                    resultsHTML += `
+                        <div class="alert alert-warning">
+                            <strong>إجراء الطوارئ:</strong> ${diag.emergency_action}
+                        </div>
+                    `;
+                }
+                
+                if (diag.note) {
+                    resultsHTML += `
+                        <div class="alert alert-secondary">
+                            ${diag.note}
+                        </div>
+                    `;
+                }
+                
+                if (diag.resources && diag.resources.length > 0) {
+                    resultsHTML += `
+                        <div class="mt-3">
+                            <h6>موارد مفيدة:</h6>
+                            <ul class="list-group">
+                    `;
+                    
+                    diag.resources.forEach(resource => {
+                        let icon = 'link';
+                        if (resource.type === 'VIDEO') icon = 'youtube';
+                        else if (resource.type === 'ARTICLE') icon = 'file-earmark-text';
+                        else if (resource.type === 'MANUAL') icon = 'book';
+                        else if (resource.type === 'TOOL') icon = 'tools';
+                        
+                        resultsHTML += `
+                            <li class="list-group-item">
+                                <a href="${resource.url}" target="_blank">
+                                    <i class="bi bi-${icon} me-2"></i> ${resource.title}
+                                </a>
+                            </li>
+                        `;
+                    });
+                    
+                    resultsHTML += `
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                resultsHTML += `
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            resultsHTML += `
+                <div class="alert alert-success">
+                    لم يتم العثور على أكواد أعطال. السيارة في حالة جيدة!
+                </div>
+            `;
+        }
+        
+        if (data.missing_codes && data.missing_codes.length > 0) {
+            resultsHTML += `
+                <div class="alert alert-warning">
+                    <h6>أكواد غير معروفة:</h6>
+                    <p>الأكواد التالية لم يتم العثور عليها في قاعدة البيانات:</p>
+                    <div>
+            `;
+            
+            data.missing_codes.forEach(code => {
+                resultsHTML += `<span class="badge bg-secondary me-2">${code}</span>`;
+            });
+            
+            resultsHTML += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Update and show results
+        scanResults.innerHTML = resultsHTML;
+        loadingResults.classList.add('d-none');
+        scanResults.classList.remove('d-none');
+    }
+</script>
+{% endblock %}
+
+{% endblock %}

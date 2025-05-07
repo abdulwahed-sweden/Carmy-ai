@@ -4,17 +4,41 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
+from django.shortcuts import render, get_object_or_404
 
 from .models import CarBrand, Car, ErrorCodeCategory, ErrorCode, CarError, RepairResource
 from .serializers import (
     CarBrandSerializer, CarListSerializer, CarDetailSerializer,
     ErrorCodeCategorySerializer, ErrorCodeListSerializer, ErrorCodeDetailSerializer,
-    CarWithErrorsSerializer, RepairResourceSerializer
+    CarWithErrorsSerializer, RepairResourceSerializer, CarErrorCauseSerializer
 )
 
+# Frontend views
+def index(request):
+    """View for the main car diagnostics page"""
+    return render(request, 'car_diagnostics/index.html')
 
+def car_search(request):
+    """View for searching cars"""
+    brands = CarBrand.objects.all()
+    return render(request, 'car_diagnostics/car_search.html', {'brands': brands})
+
+def error_search(request):
+    """View for searching error codes"""
+    categories = ErrorCodeCategory.objects.all()
+    return render(request, 'car_diagnostics/error_search.html', {'categories': categories})
+
+def smart_diagnostic(request):
+    """View for the smart diagnostic page"""
+    brands = CarBrand.objects.all()
+    return render(request, 'car_diagnostics/smart_diagnostic.html', {'brands': brands})
+
+def obd_scanner(request):
+    """View for the OBD scanner page"""
+    return render(request, 'car_diagnostics/obd_scanner.html')
+
+# API views
 class CarBrandViewSet(viewsets.ModelViewSet):
-    """واجهة برمجية للتعامل مع الشركات المصنعة للسيارات"""
     queryset = CarBrand.objects.all()
     serializer_class = CarBrandSerializer
     filter_backends = [filters.SearchFilter]
@@ -22,7 +46,6 @@ class CarBrandViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def models(self, request, pk=None):
-        """الحصول على موديلات سيارات شركة محددة"""
         brand = self.get_object()
         cars = Car.objects.filter(brand=brand)
         serializer = CarListSerializer(cars, many=True)
@@ -30,14 +53,12 @@ class CarBrandViewSet(viewsets.ModelViewSet):
 
 
 class CarViewSet(viewsets.ModelViewSet):
-    """واجهة برمجية للتعامل مع موديلات السيارات"""
     queryset = Car.objects.all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['brand', 'model', 'year']
     search_fields = ['brand__name', 'model']
 
     def get_serializer_class(self):
-        """تحديد نوع المحول المناسب حسب نوع العملية"""
         if self.action == 'list':
             return CarListSerializer
         elif self.action in ['retrieve', 'errors']:
@@ -46,14 +67,12 @@ class CarViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def errors(self, request, pk=None):
-        """الحصول على أعطال سيارة محددة"""
         car = self.get_object()
         serializer = CarWithErrorsSerializer(car)
         return Response(serializer.data)
 
 
 class ErrorCodeCategoryViewSet(viewsets.ModelViewSet):
-    """واجهة برمجية للتعامل مع فئات أكواد الأعطال"""
     queryset = ErrorCodeCategory.objects.all()
     serializer_class = ErrorCodeCategorySerializer
     filter_backends = [filters.SearchFilter]
@@ -61,21 +80,18 @@ class ErrorCodeCategoryViewSet(viewsets.ModelViewSet):
 
 
 class ErrorCodeViewSet(viewsets.ModelViewSet):
-    """واجهة برمجية للتعامل مع أكواد الأعطال"""
     queryset = ErrorCode.objects.all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['obd_code', 'severity', 'category']
     search_fields = ['obd_code', 'description']
 
     def get_serializer_class(self):
-        """تحديد نوع المحول المناسب حسب نوع العملية"""
         if self.action == 'list':
             return ErrorCodeListSerializer
         return ErrorCodeDetailSerializer
 
     @action(detail=True, methods=['get'])
     def affected_cars(self, request, pk=None):
-        """الحصول على السيارات المتأثرة بكود العطل المحدد"""
         error_code = self.get_object()
         cars = Car.objects.filter(car_errors__error_code=error_code)
         serializer = CarListSerializer(cars, many=True)
@@ -86,7 +102,6 @@ class DiagnosticSearchViewSet(viewsets.ViewSet):
     """واجهة برمجية للبحث الذكي عن الأعطال"""
 
     def list(self, request):
-        """البحث عن الأعطال بناءً على معايير مختلفة"""
         brand = request.query_params.get('brand')
         model = request.query_params.get('model')
         year = request.query_params.get('year')
@@ -94,10 +109,8 @@ class DiagnosticSearchViewSet(viewsets.ViewSet):
 
         if obd_code:
             try:
-                # البحث عن كود العطل
                 error_code = ErrorCode.objects.get(obd_code=obd_code)
 
-                # تحديد السيارة إذا كانت محددة
                 car = None
                 if brand and model and year:
                     try:
@@ -107,7 +120,6 @@ class DiagnosticSearchViewSet(viewsets.ViewSet):
                         serializer = CarWithErrorsSerializer(car)
                         return Response(serializer.data)
                     except (CarBrand.DoesNotExist, Car.DoesNotExist, CarError.DoesNotExist):
-                        # إذا لم يتم العثور على السيارة المحددة، نعرض معلومات عامة عن الكود
                         response_data = {
                             'code': error_code.obd_code,
                             'description': error_code.description,
@@ -119,7 +131,6 @@ class DiagnosticSearchViewSet(viewsets.ViewSet):
                         }
                         return Response(response_data)
                 
-                # إذا لم يتم تحديد السيارة، نعرض معلومات عامة عن الكود
                 response_data = {
                     'code': error_code.obd_code,
                     'description': error_code.description,
@@ -137,7 +148,6 @@ class DiagnosticSearchViewSet(viewsets.ViewSet):
                 return Response({'message': 'كود العطل غير موجود'}, status=status.HTTP_404_NOT_FOUND)
 
         elif brand or model or year:
-            # البحث عن السيارة
             query = Q()
             if brand:
                 try:
@@ -145,20 +155,18 @@ class DiagnosticSearchViewSet(viewsets.ViewSet):
                     query &= Q(brand=brand_obj)
                 except CarBrand.DoesNotExist:
                     return Response({'message': 'الشركة المصنعة غير موجودة'}, status=status.HTTP_404_NOT_FOUND)
-            
             if model:
                 query &= Q(model__icontains=model)
-            
             if year:
                 query &= Q(year=year)
-            
+
             cars = Car.objects.filter(query)
             if cars.exists():
                 serializer = CarListSerializer(cars, many=True)
                 return Response(serializer.data)
             else:
                 return Response({'message': 'لم يتم العثور على سيارات مطابقة'}, status=status.HTTP_404_NOT_FOUND)
-        
+
         return Response({'message': 'يرجى تحديد معايير البحث'}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -166,7 +174,6 @@ class SmartDiagnosticAPIView(APIView):
     """واجهة برمجية للتشخيص الذكي للأعطال بناءً على وصف المشكلة"""
 
     def post(self, request):
-        """تشخيص الأعطال بناءً على وصف المشكلة"""
         car_brand = request.data.get('brand')
         car_model = request.data.get('model')
         car_year = request.data.get('year')
@@ -178,7 +185,6 @@ class SmartDiagnosticAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # تحديد السيارة
         car = None
         if car_brand and car_model and car_year:
             try:
@@ -187,10 +193,7 @@ class SmartDiagnosticAPIView(APIView):
             except (CarBrand.DoesNotExist, Car.DoesNotExist):
                 pass
 
-        # استخراج الكلمات المفتاحية من وصف المشكلة
-        keywords = problem_description.lower().split()
-
-        # قائمة من العلاقات بين الأعراض والأكواد المحتملة
+        # Dictionary mapping symptoms to potential error codes
         symptoms_to_codes = {
             'misfire': ['P0300', 'P0301', 'P0302', 'P0303', 'P0304'],
             'shaking': ['P0300', 'P0301', 'P0302', 'P0303', 'P0304'],
@@ -213,17 +216,17 @@ class SmartDiagnosticAPIView(APIView):
             'stall': ['P0505', 'P0506', 'P0507', 'P0300'],
         }
 
-        # تحديد الأكواد المحتملة بناءً على الكلمات المفتاحية
+        # Identify potential error codes based on keywords in the problem description
         possible_codes = set()
+        keywords = problem_description.lower().split()
         for keyword in keywords:
             for symptom, codes in symptoms_to_codes.items():
                 if keyword in symptom or symptom in keyword:
                     possible_codes.update(codes)
 
-        # البحث عن الأكواد في قاعدة البيانات
         error_codes = ErrorCode.objects.filter(obd_code__in=possible_codes)
 
-        # إذا تم تحديد السيارة، فقم بتحديد الأكواد الخاصة بها
+        # If a car is identified, find car-specific errors
         car_specific_errors = []
         if car and error_codes:
             car_errors = CarError.objects.filter(car=car, error_code__in=error_codes)
@@ -240,7 +243,6 @@ class SmartDiagnosticAPIView(APIView):
                     for error in car_errors
                 ]
 
-        # إعداد الرد
         response_data = {
             'query': problem_description,
             'possible_codes': [
@@ -265,12 +267,70 @@ class SmartDiagnosticAPIView(APIView):
         return Response(response_data)
 
 
+class OBDSimulatorAPIView(APIView):
+    """واجهة برمجية لمحاكاة قراءة أكواد OBD-II لأغراض الاختبار"""
+    
+    def post(self, request):
+        import random
+        
+        car_id = request.data.get('car_id')
+        simulate_type = request.data.get('simulate_type', 'random')
+        
+        if not car_id:
+            return Response({'error': 'يجب توفير معرف السيارة'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            car = Car.objects.get(id=car_id)
+        except Car.DoesNotExist:
+            return Response({'error': 'السيارة المحددة غير موجودة'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Common OBD-II codes for simulation
+        common_codes = [
+            'P0300', 'P0301', 'P0302', 'P0303', 'P0171', 'P0174',
+            'P0420', 'P0430', 'P0440', 'P0442', 'P0446',
+            'P0455', 'P0456', 'P0700', 'P0128'
+        ]
+        
+        # Codes based on simulation type
+        if simulate_type == 'engine_misfire':
+            codes = ['P0300', 'P0301', 'P0302']
+        elif simulate_type == 'fuel_system':
+            codes = ['P0171', 'P0174', 'P0172']
+        elif simulate_type == 'emissions':
+            codes = ['P0420', 'P0430', 'P0440']
+        elif simulate_type == 'transmission':
+            codes = ['P0700', 'P0730', 'P0740']
+        elif simulate_type == 'random_critical':
+            # Simulate critical random issues
+            critical_codes = ['P0300', 'P0303', 'P0116', 'P0217', 'P0505']
+            codes = random.sample(critical_codes, k=random.choice([1, 2]))
+        else:  # random
+            # Select a random number of codes
+            num_codes = random.choice([1, 2, 3])
+            codes = random.sample(common_codes, k=num_codes)
+        
+        # Add some unknown codes that may not be in the database
+        unknown_codes = [f'P{random.randint(1000, 9999)}' for _ in range(random.choice([0, 1]))]
+        
+        # Combine known and unknown codes
+        all_codes = codes + unknown_codes
+        
+        return Response({
+            'car': {
+                'id': car.id,
+                'brand': car.brand.name,
+                'model': car.model,
+                'year': car.year
+            },
+            'obd_codes': all_codes,
+            'note': 'هذه بيانات محاكاة لأغراض الاختبار فقط.'
+        })
+
+
 class OBDDeviceDataAPIView(APIView):
     """واجهة برمجية لمعالجة البيانات الواردة من جهاز OBD-II"""
     
     def post(self, request):
-        """معالجة بيانات جهاز OBD-II وتوفير التشخيص"""
-        # استخراج البيانات من الطلب
         car_id = request.data.get('car_id')
         obd_codes = request.data.get('obd_codes', [])
         
@@ -288,15 +348,16 @@ class OBDDeviceDataAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # البحث عن الأكواد في قاعدة البيانات
+        # Find the error codes in the database
         error_codes = ErrorCode.objects.filter(obd_code__in=obd_codes)
         
-        # تحضير نتائج التشخيص
+        # Prepare diagnostics results
         diagnostics = []
         for error_code in error_codes:
-            # البحث عن العطل المحدد للسيارة
             try:
                 car_error = CarError.objects.get(car=car, error_code=error_code)
+                resources = RepairResourceSerializer(car_error.resources.all(), many=True).data
+                
                 diagnostic = {
                     'code': error_code.obd_code,
                     'description': error_code.description,
@@ -307,17 +368,10 @@ class OBDDeviceDataAPIView(APIView):
                     'repair_steps': car_error.repair_steps,
                     'estimated_cost': car_error.estimated_cost,
                     'emergency_action': error_code.emergency_action,
-                    'resources': [
-                        {
-                            'title': resource.title,
-                            'type': resource.resource_type,
-                            'url': resource.url
-                        }
-                        for resource in car_error.resources.all()
-                    ]
+                    'resources': resources
                 }
             except CarError.DoesNotExist:
-                # إذا لم يكن هناك معلومات محددة للسيارة، نستخدم المعلومات العامة للكود
+                # If no car-specific info exists, return general error code info
                 diagnostic = {
                     'code': error_code.obd_code,
                     'description': error_code.description,
@@ -329,11 +383,10 @@ class OBDDeviceDataAPIView(APIView):
             
             diagnostics.append(diagnostic)
         
-        # إذا كانت هناك أكواد غير موجودة في قاعدة البيانات
+        # Identify codes that weren't found in the database
         missing_codes = set(obd_codes) - set(error_codes.values_list('obd_code', flat=True))
         
-        # تحضير الرد
-        response_data = {
+        return Response({
             'car': {
                 'id': car.id,
                 'brand': car.brand.name,
@@ -343,6 +396,4 @@ class OBDDeviceDataAPIView(APIView):
             },
             'diagnostics': diagnostics,
             'missing_codes': list(missing_codes)
-        }
-        
-        return Response(response_data)
+        })

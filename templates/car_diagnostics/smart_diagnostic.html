@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}التشخيص الذكي{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">التشخيص الذكي للأعطال</h1>
+    
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <p class="card-text">
+                        صف مشكلة سيارتك وسيقوم النظام بتحليلها وتحديد الأسباب المحتملة والحلول الممكنة.
+                    </p>
+                    
+                    <form id="smartDiagnosticForm" class="mt-4">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="brand" class="form-label">الشركة المصنعة</label>
+                                <select name="brand" id="brand" class="form-select" required>
+                                    <option value="">-- اختر --</option>
+                                    {% for brand in brands %}
+                                        <option value="{{ brand.name }}">{{ brand.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="model" class="form-label">الموديل</label>
+                                <input type="text" name="model" id="model" class="form-control" required>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="year" class="form-label">سنة الصنع</label>
+                                <input type="number" name="year" id="year" class="form-control" required min="1980" max="2025">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="problem_description" class="form-label">وصف المشكلة</label>
+                            <textarea name="problem_description" id="problem_description" class="form-control" rows="5" required></textarea>
+                            <div class="form-text">
+                                مثال: "السيارة تهتز عند التوقف"، "صوت طقطقة من المحرك عند التسارع"، "استهلاك وقود زائد"
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">تشخيص المشكلة</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="diagnosticResults" class="card shadow-sm d-none">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">نتائج التشخيص</h3>
+                </div>
+                <div class="card-body" id="resultsContainer">
+                    <!-- Results will be loaded here via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.getElementById('smartDiagnosticForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const brand = document.getElementById('brand').value;
+        const model = document.getElementById('model').value;
+        const year = document.getElementById('year').value;
+        const problemDescription = document.getElementById('problem_description').value;
+        
+        // Show loading state
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاري التشخيص...';
+        submitButton.disabled = true;
+        
+        try {
+            const response = await fetch('{% url "car_diagnostics:smart_diagnostic_api" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    brand,
+                    model,
+                    year,
+                    problem_description: problemDescription
+                })
+            });
+            
+            const data = await response.json();
+            
+            // Display results
+            const resultsElement = document.getElementById('diagnosticResults');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            let resultsHTML = '';
+            
+            if (data.possible_codes && data.possible_codes.length > 0) {
+                resultsHTML += `
+                    <div class="mb-4">
+                        <h4>الأكواد المحتملة</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>كود العطل</th>
+                                        <th>الوصف</th>
+                                        <th>الخطورة</th>
+                                        <th>الفئة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                data.possible_codes.forEach(code => {
+                    const severityClass = code.severity === 'HIGH' ? 'bg-danger' : 
+                                        code.severity === 'MEDIUM' ? 'bg-warning' : 'bg-info';
+                    
+                    resultsHTML += `
+                        <tr>
+                            <td>${code.code}</td>
+                            <td>${code.description}</td>
+                            <td><span class="badge ${severityClass}">${code.severity}</span></td>
+                            <td>${code.category}</td>
+                        </tr>
+                    `;
+                });
+                
+                resultsHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsHTML += `
+                    <div class="alert alert-info">
+                        لم يتم العثور على أكواد أعطال محتملة بناءً على وصف المشكلة.
+                    </div>
+                `;
+            }
+            
+            if (data.car_specific_errors && data.car_specific_errors.length > 0) {
+                resultsHTML += `
+                    <div class="mb-4">
+                        <h4>معلومات خاصة بسيارتك</h4>
+                        <div class="alert alert-success">
+                            <strong>${data.car.brand} ${data.car.model} ${data.car.year}</strong>
+                        </div>
+                `;
+                
+                data.car_specific_errors.forEach(error => {
+                    resultsHTML += `
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">${error.code} - ${error.description}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>الأسباب المحتملة:</strong> ${error.common_causes}</p>
+                    `;
+                    
+                    if (error.solutions) {
+                        resultsHTML += `<p><strong>الحلول:</strong> ${error.solutions}</p>`;
+                    }
+                    
+                    if (error.estimated_cost) {
+                        resultsHTML += `<p><strong>التكلفة التقديرية:</strong> ${error.estimated_cost}</p>`;
+                    }
+                    
+                    resultsHTML += `
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                resultsHTML += `</div>`;
+            }
+            
+            resultsContainer.innerHTML = resultsHTML;
+            resultsElement.classList.remove('d-none');
+            resultsElement.scrollIntoView({ behavior: 'smooth' });
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء محاولة التشخيص. يرجى المحاولة مرة أخرى.');
+        } finally {
+            // Reset button state
+            submitButton.innerHTML = 'تشخيص المشكلة';
+            submitButton.disabled = false;
+        }
+    });
+</script>
+{% endblock %}
+
+{% endblock %}

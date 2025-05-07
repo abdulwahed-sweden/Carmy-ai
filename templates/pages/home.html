@@ -11,12 +11,12 @@
             <h1 class="display-4 fw-bold">Smart Car Diagnostics System</h1>
             <p class="lead">Get real-time diagnostics for your vehicle, understand error codes, and find solutions to common problems.</p>
             <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-4">
-                <a href="{% url 'car_diagnostics:index' %}" class="btn btn-primary btn-lg px-4 me-md-2">Get Started</a>
-                <a href="{% url 'car_diagnostics:obd_scanner' %}" class="btn btn-outline-secondary btn-lg px-4">Connect OBD Device</a>
+                <a href="#" class="btn btn-primary btn-lg px-4 me-md-2">Get Started</a>
+                <a href="#" class="btn btn-outline-secondary btn-lg px-4">Connect OBD Device</a>
             </div>
         </div>
         <div class="col-lg-6">
-            <img src="{% static 'img/hero-car.png' %}" alt="Car Diagnostics" class="img-fluid rounded shadow-lg">
+            <img src="{% static 'img/car.jpg' %}" alt="Car Diagnostics" class="img-fluid rounded shadow-lg">
         </div>
     </div>
 </section>
@@ -103,7 +103,7 @@
         <p class="lead">Join thousands of vehicle owners who trust our platform for accurate diagnostics.</p>
         <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
             {% if user.is_authenticated %}
-            <a href="{% url 'car_diagnostics:obd_scanner' %}" class="btn btn-light btn-lg px-4 gap-3">Start Diagnosis</a>
+            <a href="#" class="btn btn-light btn-lg px-4 gap-3">Start Diagnosis</a>
             {% else %}
             <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg px-4 gap-3">Register Now</a>
             <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg px-4">Log In</a>
@@ -111,4 +111,77 @@
         </div>
     </div>
 </section>
+
+{% if user.is_authenticated and recent_diagnostics %}
+<!-- Recent Diagnostics Section -->
+<section class="recent-diagnostics py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Your Recent Diagnostics</h2>
+        <a href="{% url 'accounts:history' %}" class="btn btn-outline-primary">View All</a>
+    </div>
+    <div class="row">
+        {% for diagnostic in recent_diagnostics %}
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title mb-0">
+                            {{ diagnostic.vehicle.nickname|default:diagnostic.vehicle.car }}
+                        </h5>
+                        <span class="badge bg-secondary">{{ diagnostic.date|date:"M d, Y" }}</span>
+                    </div>
+                    <p class="card-text">
+                        <strong>Codes:</strong> 
+                        {% for code in diagnostic.obd_codes %}
+                            <span class="badge bg-danger me-1">{{ code }}</span>
+                        {% endfor %}
+                    </p>
+                    {% if diagnostic.notes %}
+                    <p class="card-text small text-muted">{{ diagnostic.notes|truncatechars:100 }}</p>
+                    {% endif %}
+                    <a href="{% url 'accounts:diagnostic_detail' diagnostic.id %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        padding: 3rem 0;
+    }
+    
+    .feature-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 4rem;
+        height: 4rem;
+    }
+    
+    .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 3rem;
+        height: 3rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    /* RTL support for Arabic */
+    [dir="rtl"] .me-md-2 {
+        margin-right: 0 !important;
+        margin-left: 0.5rem !important;
+    }
+    
+    [dir="rtl"] .me-1 {
+        margin-right: 0 !important;
+        margin-left: 0.25rem !important;
+    }
+</style>
 {% endblock %}

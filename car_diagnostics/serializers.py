@@ -54,7 +54,7 @@ class CarErrorCauseSerializer(serializers.ModelSerializer):
     class Meta:
         model = CarError
         fields = ['code', 'description', 'severity', 'category', 'common_causes', 
-                  'solutions', 'repair_steps', 'estimated_cost', 'resources']
+                 'solutions', 'repair_steps', 'estimated_cost', 'resources']
 
 class CarWithErrorsSerializer(serializers.ModelSerializer):
     brand_name = serializers.CharField(source='brand.name', read_only=True)

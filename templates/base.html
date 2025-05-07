@@ -6,11 +6,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Car Diagnostics System{% endblock %}</title>
-    <!-- Bootstrap CSS -->
+    
+    <!-- CSS Resources -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <!-- Custom CSS -->
     <link href="{% static 'css/styles.css' %}" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
@@ -18,13 +17,18 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
         <div class="container">
+            <!-- Brand Logo -->
             <a class="navbar-brand d-flex align-items-center" href="{% url 'pages:home' %}">
                 <i class="bi bi-car-front-fill me-2"></i>
                 <span>AutoDiagnostics</span>
             </a>
+            
+            <!-- Mobile Toggle Button -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
+            <!-- Navigation Items -->
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
@@ -126,6 +130,7 @@
 
     <!-- Main Content -->
     <main class="container py-4">
+        <!-- Flash Messages -->
         {% if messages %}
             {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -135,6 +140,7 @@
             {% endfor %}
         {% endif %}
         
+        <!-- Content Block for Child Templates -->
         {% block content %}{% endblock %}
     </main>
 
@@ -142,10 +148,13 @@
     <footer class="bg-dark text-white py-4 mt-5">
         <div class="container">
             <div class="row">
+                <!-- Company Info -->
                 <div class="col-md-4">
                     <h5>AutoDiagnostics</h5>
                     <p class="small">Your comprehensive solution for car diagnostics and maintenance tracking.</p>
                 </div>
+                
+                <!-- Quick Links -->
                 <div class="col-md-4">
                     <h5>Quick Links</h5>
                     <ul class="list-unstyled">
@@ -155,6 +164,8 @@
                         <li><a href="{% url 'pages:about' %}" class="text-white-50">About Us</a></li>
                     </ul>
                 </div>
+                
+                <!-- Contact Info -->
                 <div class="col-md-4">
                     <h5>Contact</h5>
                     <address class="small text-white-50">
@@ -164,7 +175,10 @@
                     </address>
                 </div>
             </div>
+            
             <hr>
+            
+            <!-- Copyright and Social Media -->
             <div class="row">
                 <div class="col-md-6">
                     <p class="small mb-0">&copy; {% now "Y" %} AutoDiagnostics. All rights reserved.</p>
@@ -189,9 +203,8 @@
         </div>
     </footer>
 
-    <!-- Bootstrap JS Bundle with Popper -->
+    <!-- JavaScript Resources -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
     <script src="{% static 'js/app.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>
