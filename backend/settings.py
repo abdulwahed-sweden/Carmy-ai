@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'accounts',
     'posts',
     'car_diagnostics',
+    'pages',
 ]
 
 MIDDLEWARE = [

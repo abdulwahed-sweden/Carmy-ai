@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About Us - AutoDiagnostics{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-5 mb-4">About AutoDiagnostics</h1>
+            
+            <div class="card bg-light border-0 shadow-sm mb-5">
+                <div class="card-body p-4">
+                    <h2 class="h4 text-primary">Our Mission</h2>
+                    <p>At AutoDiagnostics, we're committed to empowering vehicle owners with advanced diagnostic tools and information that was once only available to professional mechanics. Our mission is to make car repair more transparent, accessible, and affordable for everyone.</p>
+                </div>
+            </div>
+            
+            <h2 class="h3 mb-4">Our Story</h2>
+            <div class="row mb-5">
+                <div class="col-md-6">
+                    <p>Founded in 2022, AutoDiagnostics began as a passion project by a team of automotive engineers and software developers who believed that car owners should have access to the same diagnostic tools and information as professional mechanics.</p>
+                    <p>What started as a simple OBD-II code lookup tool has evolved into a comprehensive platform that combines cutting-edge technology with an extensive database of vehicle-specific information.</p>
+                </div>
+                <div class="col-md-6">
+                    <img src="{% static 'img/about-team.jpg' %}" alt="Our Team" class="img-fluid rounded shadow">
+                </div>
+            </div>
+            
+            <h2 class="h3 mb-4">What Sets Us Apart</h2>
+            <div class="row mb-5">
+                <div class="col-md-6 order-md-2">
+                    <div class="ps-md-4">
+                        <ul class="list-unstyled">
+                            <li class="mb-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-check-circle-fill text-success fs-4"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5>Vehicle-Specific Diagnostics</h5>
+                                        <p>Our platform provides diagnostics tailored to your specific vehicle make, model, and year.</p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="mb-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-check-circle-fill text-success fs-4"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5>Expert Knowledge Base</h5>
+                                        <p>Access to a comprehensive database of error codes, common issues, and repair solutions.</p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-check-circle-fill text-success fs-4"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5>Community Support</h5>
+                                        <p>Connect with other vehicle owners and mechanics to share experiences and solutions.</p>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6 order-md-1">
+                    <img src="{% static 'img/about-features.jpg' %}" alt="Our Features" class="img-fluid rounded shadow">
+                </div>
+            </div>
+            
+            <h2 class="h3 mb-4">Our Team</h2>
+            <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <img src="{% static 'img/team-1.jpg' %}" class="card-img-top" alt="Team Member">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">John Smith</h5>
+                            <p class="card-text text-muted">Founder & CEO</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <img src="{% static 'img/team-2.jpg' %}" class="card-img-top" alt="Team Member">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Sarah Johnson</h5>
+                            <p class="card-text text-muted">Lead Engineer</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <img src="{% static 'img/team-3.jpg' %}" class="card-img-top" alt="Team Member">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Michael Chen</h5>
+                            <p class="card-text text-muted">Automotive Specialist</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="{% url 'pages:contact' %}" class="btn btn-primary btn-lg px-4">Contact Us</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
