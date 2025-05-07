@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center my-4">نظام تشخيص أعطال السيارات</h1>
+    
+    <div class="card shadow">
+        <div class="card-body">
+            <form method="GET" action="{% url 'car_diagnostics:search_results' %}">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">الشركة المصنعة</label>
+                        <select name="brand" class="form-select">
+                            <option value="">-- اختر --</option>
+                            <option value="Toyota">Toyota</option>
+                            <option value="Hyundai">Hyundai</option>
+                            <option value="Honda">Honda</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">الموديل</label>
+                        <input type="text" name="model" class="form-control">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">السنة</label>
+                        <input type="number" name="year" class="form-control">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label">كود العطل</label>
+                        <input type="text" name="obd_code" class="form-control" placeholder="مثال: P0300">
+                    </div>
+                </div>
+                
+                <div class="d-grid mt-3">
+                    <button type="submit" class="btn btn-primary">بحث</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
