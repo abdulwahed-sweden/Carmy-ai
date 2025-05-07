@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third-party apps
+    'rest_framework',  # Asegúrate de que esto esté aquí
+    'django_filters',  # También deberías tener esto para DjangoFilterBackend
     # التطبيقات الموجودة
     'accounts',
     'posts',
