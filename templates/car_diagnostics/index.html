@@ -1,44 +1,135 @@
+<!-- templates/car_diagnostics/index.html -->
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container">
-    <h1 class="text-center my-4">نظام تشخيص أعطال السيارات</h1>
-    
-    <div class="card shadow">
-        <div class="card-body">
-            <form method="GET" action="{% url 'car_diagnostics:search_results' %}">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">الشركة المصنعة</label>
-                        <select name="brand" class="form-select">
-                            <option value="">-- اختر --</option>
-                            <option value="Toyota">Toyota</option>
-                            <option value="Hyundai">Hyundai</option>
-                            <option value="Honda">Honda</option>
-                        </select>
-                    </div>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="text-center mb-0">نظام تشخيص أعطال السيارات</h2>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{% url 'car_diagnostics:search_results' %}" class="mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select name="brand" id="brand" class="form-select" onchange="loadModels()">
+                                        <option value="">-- اختر --</option>
+                                        {% for brand in brands %}
+                                            <option value="{{ brand.id }}">{{ brand.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="brand">الشركة المصنعة</label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select name="model" id="model" class="form-select" disabled>
+                                        <option value="">-- اختر أولاً الشركة --</option>
+                                    </select>
+                                    <label for="model">الموديل</label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <div class="form-floating">
+                                    <input type="number" name="year" id="year" class="form-control" placeholder="السنة">
+                                    <label for="year">سنة الصنع</label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="text" name="obd_code" id="obd_code" class="form-control" placeholder="مثال: P0300">
+                                    <label for="obd_code">كود العطل (OBD-II)</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-search me-2"></i> بحث
+                            </button>
+                        </div>
+                    </form>
                     
-                    <div class="col-md-3">
-                        <label class="form-label">الموديل</label>
-                        <input type="text" name="model" class="form-control">
-                    </div>
+                    <hr>
                     
-                    <div class="col-md-2">
-                        <label class="form-label">السنة</label>
-                        <input type="number" name="year" class="form-control">
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <label class="form-label">كود العطل</label>
-                        <input type="text" name="obd_code" class="form-control" placeholder="مثال: P0300">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-warning">
+                                <div class="card-header bg-warning text-white">
+                                    <h4 class="mb-0">بحث حسب السيارة</h4>
+                                </div>
+                                <div class="card-body">
+                                    <p>ابحث عن الأعطال الشائعة في سيارتك عن طريق اختيار:</p>
+                                    <ol>
+                                        <li>الشركة المصنعة</li>
+                                        <li>الموديل</li>
+                                        <li>سنة الصنع</li>
+                                    </ol>
+                                    <a href="{% url 'car_diagnostics:cars' %}" class="btn btn-outline-warning">
+                                        عرض جميع السيارات
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card h-100 border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h4 class="mb-0">بحث حسب كود العطل</h4>
+                                </div>
+                                <div class="card-body">
+                                    <p>ادخل كود العطل (OBD-II) مثل:</p>
+                                    <ul>
+                                        <li>P0300 - خلل في الاحتراق</li>
+                                        <li>P0171 - نظام وقود "أقل من اللازم" (Bank 1)</li>
+                                        <li>P0420 - كفاءة المحول الحفاز منخفضة</li>
+                                    </ul>
+                                    <a href="{% url 'car_diagnostics:error_codes' %}" class="btn btn-outline-info">
+                                        عرض جميع أكواد الأعطال
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="d-grid mt-3">
-                    <button type="submit" class="btn btn-primary">بحث</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    function loadModels() {
+        const brandId = document.getElementById('brand').value;
+        const modelSelect = document.getElementById('model');
+        
+        // إعادة تعيين قائمة الموديلات
+        modelSelect.innerHTML = '<option value="">-- اختر الموديل --</option>';
+        
+        if (brandId) {
+            // تمكين قائمة الموديلات
+            modelSelect.disabled = false;
+            
+            // الحصول على الموديلات من واجهة برمجة التطبيقات
+            fetch(`/api/diagnostics/brands/${brandId}/models/`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(car => {
+                        const option = document.createElement('option');
+                        option.value = car.model;
+                        option.textContent = car.model;
+                        modelSelect.appendChild(option);
+                    });
+                });
+        } else {
+            // تعطيل قائمة الموديلات
+            modelSelect.disabled = true;
+        }
+    }
+</script>
 {% endblock %}

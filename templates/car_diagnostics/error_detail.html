@@ -1,0 +1,154 @@
+<!-- templates/car_diagnostics/error_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'car_diagnostics:index' %}">الرئيسية</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'car_diagnostics:error_codes' %}">أكواد الأعطال</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ error.obd_code }}</li>
+                </ol>
+            </nav>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0">{{ error.obd_code }} - {{ error.description }}</h2>
+                        <span class="badge bg-{{ error.severity|lower }}">
+                            {{ error.get_severity_display }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h3>معلومات عامة</h3>
+                            <table class="table table-striped">
+                                <tr>
+                                    <th width="30%">فئة الكود:</th>
+                                    <td>{{ error.category.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>نظام السيارة:</th>
+                                    <td>{{ error.category.get_category_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th>خطورة العطل:</th>
+                                    <td>
+                                        <span class="badge bg-{{ error.severity|lower }}">
+                                            {{ error.get_severity_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>صعوبة الإصلاح:</th>
+                                    <td>{{ error.get_repair_difficulty_display }}</td>
+                                </tr>
+                                {% if error.emergency_action %}
+                                <tr>
+                                    <th>إجراء الطوارئ:</th>
+                                    <td>{{ error.emergency_action }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card border-{{ error.severity|lower }}">
+                                <div class="card-header bg-{{ error.severity|lower }} text-white">
+                                    <h4 class="mb-0">تصنيف الخطورة</h4>
+                                </div>
+                                <div class="card-body">
+                                    {% if error.severity == 'HIGH' or error.severity == 'CRITICAL' %}
+                                    <div class="alert alert-danger">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        <strong>تحذير:</strong> هذا العطل يتطلب اهتمامًا فوريًا!
+                                    </div>
+                                    {% elif error.severity == 'MEDIUM' %}
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-circle me-2"></i>
+                                        <strong>تنبيه:</strong> يُنصح بفحص السيارة في أقرب وقت.
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>ملاحظة:</strong> يمكن تأجيل الإصلاح مع مراقبة أداء السيارة.
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3>الأسباب المحتملة</h3>
+                    <div class="row">
+                        {% for car_error in car_errors %}
+                        <div class="col-lg-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">{{ car_error.car.brand.name }} {{ car_error.car.model }} ({{ car_error.car.year }})</h5>
+                                </div>
+                                <div class="card-body">
+                                    <h6>الأسباب الشائعة:</h6>
+                                    <ul>
+                                        {% for cause in car_error.common_causes_list %}
+                                        <li>{{ cause }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    
+                                    {% if car_error.solutions %}
+                                    <h6>الحلول المقترحة:</h6>
+                                    <ul>
+                                        {% for solution in car_error.solutions_list %}
+                                        <li>{{ solution }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% endif %}
+                                    
+                                    {% if car_error.estimated_cost %}
+                                    <h6>التكلفة التقديرية:</h6>
+                                    <p class="alert alert-secondary">{{ car_error.estimated_cost }}</p>
+                                    {% endif %}
+
+                                    {% if car_error.resources.exists %}
+                                    <h6>موارد مفيدة:</h6>
+                                    <ul class="list-group">
+                                        {% for resource in car_error.resources.all %}
+                                        <li class="list-group-item">
+                                            <a href="{{ resource.url }}" target="_blank">
+                                                {% if resource.resource_type == 'VIDEO' %}
+                                                <i class="bi bi-youtube me-2 text-danger"></i>
+                                                {% elif resource.resource_type == 'ARTICLE' %}
+                                                <i class="bi bi-file-text me-2 text-primary"></i>
+                                                {% elif resource.resource_type == 'MANUAL' %}
+                                                <i class="bi bi-book me-2 text-success"></i>
+                                                {% else %}
+                                                <i class="bi bi-tools me-2 text-secondary"></i>
+                                                {% endif %}
+                                                {{ resource.title }}
+                                            </a>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer">
+                                    <a href="{% url 'car_diagnostics:car_detail' car_error.car.id %}" class="btn btn-outline-primary btn-sm">
+                                        عرض تفاصيل السيارة
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
