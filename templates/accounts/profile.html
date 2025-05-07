@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الملف الشخصي{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <img src="{{ user.profile.profile_image.url }}" alt="Profile Picture" class="rounded-circle img-fluid" style="width: 150px; height: 150px; object-fit: cover;">
+                    <h5 class="my-3">{{ user.get_full_name|default:user.username }}</h5>
+                    <p class="text-muted mb-1">{{ user.email }}</p>
+                    <p class="text-muted mb-4">{{ user.profile.phone_number|default:"" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">تعديل الملف الشخصي</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">اسم المستخدم</label>
+                            <div class="col-sm-9">
+                                {{ u_form.username }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">البريد الإلكتروني</label>
+                            <div class="col-sm-9">
+                                {{ u_form.email }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">الاسم الأول</label>
+                            <div class="col-sm-9">
+                                {{ u_form.first_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">الاسم الأخير</label>
+                            <div class="col-sm-9">
+                                {{ u_form.last_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">الصورة الشخصية</label>
+                            <div class="col-sm-9">
+                                {{ p_form.profile_image }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label">رقم الهاتف</label>
+                            <div class="col-sm-9">
+                                {{ p_form.phone_number }}
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

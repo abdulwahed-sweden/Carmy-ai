@@ -1,19 +1,28 @@
-# accounts/urls.py
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import (UserProfileViewSet, UserVehicleViewSet, 
-                   DiagnosticHistoryViewSet, MaintenanceRecordViewSet)
+from django.urls import path
+from . import views
 
-router = DefaultRouter()
-router.register(r'profile', UserProfileViewSet, basename='profile')
-router.register(r'vehicles', UserVehicleViewSet, basename='vehicles')
-router.register(r'diagnostics', DiagnosticHistoryViewSet, basename='diagnostics')
-router.register(r'maintenance', MaintenanceRecordViewSet, basename='maintenance')
+app_name = 'accounts'
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('auth/', include('rest_framework.urls')),
+    # Authentication URLs
+    path('register/', views.register, name='register'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    
+    # Profile URLs
+    path('profile/', views.profile, name='profile'),
+    
+    # Vehicle management URLs
+    path('vehicles/', views.vehicles, name='vehicles'),
+    path('vehicles/add/', views.add_vehicle, name='add_vehicle'),
+    path('vehicles/<int:vehicle_id>/edit/', views.edit_vehicle, name='edit_vehicle'),
+    path('vehicles/<int:vehicle_id>/delete/', views.delete_vehicle, name='delete_vehicle'),
+    
+    # Diagnostic history URLs
+    path('diagnostics/', views.diagnostic_history, name='history'),
+    path('diagnostics/<int:diagnostic_id>/', views.diagnostic_detail, name='diagnostic_detail'),
+    
+    # Maintenance records URLs
+    path('vehicles/<int:vehicle_id>/maintenance/', views.maintenance_records, name='maintenance_records'),
+    path('vehicles/<int:vehicle_id>/maintenance/add/', views.add_maintenance, name='add_maintenance'),
 ]

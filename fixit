@@ -1,0 +1,2 @@
+{% url 'car_diagnostics:index' %}
+{% url 'car_diagnostics:obd_scanner' %}

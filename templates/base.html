@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -16,7 +18,7 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'pages:home' %}">
                 <i class="bi bi-car-front-fill me-2"></i>
                 <span>AutoDiagnostics</span>
             </a>
@@ -26,12 +28,12 @@
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'pages:home' %}">
                             <i class="bi bi-house-door"></i> Home
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if 'diagnostics' in request.path %}active{% endif %}" href="{% url 'car_diagnostics:index' %}">
+                        <a class="nav-link {% if 'diagnostics' in request.path %}active{% endif %}" href="#">
                             <i class="bi bi-tools"></i> Diagnostics
                         </a>
                     </li>
@@ -41,25 +43,25 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li>
-                                <a class="dropdown-item" href="{% url 'car_diagnostics:car_search' %}">
+                                <a class="dropdown-item" href="#">
                                     <i class="bi bi-car-front"></i> Search by Car
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="{% url 'car_diagnostics:error_search' %}">
+                                <a class="dropdown-item" href="#">
                                     <i class="bi bi-exclamation-triangle"></i> Search by Error Code
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" href="{% url 'car_diagnostics:smart_diagnostic' %}">
+                                <a class="dropdown-item" href="#">
                                     <i class="bi bi-magic"></i> Smart Diagnostic
                                 </a>
                             </li>
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if 'scanner' in request.path %}active{% endif %}" href="{% url 'car_diagnostics:obd_scanner' %}">
+                        <a class="nav-link {% if 'scanner' in request.path %}active{% endif %}" href="#">
                             <i class="bi bi-bluetooth"></i> OBD Scanner
                         </a>
                     </li>
@@ -75,31 +77,21 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
                                 <a class="dropdown-item" href="{% url 'accounts:profile' %}">
-                                    <i class="bi bi-person"></i> My Profile
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'accounts:vehicles' %}">
-                                    <i class="bi bi-car-front"></i> My Vehicles
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'accounts:history' %}">
-                                    <i class="bi bi-clock-history"></i> Diagnostic History
+                                    <i class="bi bi-person"></i> الملف الشخصي
                                 </a>
                             </li>
                             {% if user.is_staff %}
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'admin:index' %}">
-                                    <i class="bi bi-gear"></i> Admin
+                                    <i class="bi bi-gear"></i> لوحة الإدارة
                                 </a>
                             </li>
                             {% endif %}
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'accounts:logout' %}">
-                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                    <i class="bi bi-box-arrow-right"></i> تسجيل الخروج
                                 </a>
                             </li>
                         </ul>
@@ -107,12 +99,12 @@
                     {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'accounts:login' %}">
-                            <i class="bi bi-box-arrow-in-right"></i> Login
+                            <i class="bi bi-box-arrow-in-right"></i> تسجيل الدخول
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'accounts:register' %}">
-                            <i class="bi bi-person-plus"></i> Register
+                            <i class="bi bi-person-plus"></i> التسجيل
                         </a>
                     </li>
                     {% endif %}
@@ -124,8 +116,8 @@
                         <i class="bi bi-globe"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=en">English</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=ar">العربية</a></li>
+                        <li><a class="dropdown-item" href="#">English</a></li>
+                        <li><a class="dropdown-item" href="#">العربية</a></li>
                     </ul>
                 </div>
             </div>
@@ -157,10 +149,10 @@
                 <div class="col-md-4">
                     <h5>Quick Links</h5>
                     <ul class="list-unstyled">
-                        <li><a href="{% url 'home' %}" class="text-white-50">Home</a></li>
-                        <li><a href="{% url 'car_diagnostics:index' %}" class="text-white-50">Diagnostics</a></li>
-                        <li><a href="{% url 'accounts:register' %}" class="text-white-50">Register</a></li>
-                        <li><a href="#" class="text-white-50">About Us</a></li>
+                        <li><a href="{% url 'pages:home' %}" class="text-white-50">Home</a></li>
+                        <li><a href="#" class="text-white-50">Diagnostics</a></li>
+                        <li><a href="#" class="text-white-50">Register</a></li>
+                        <li><a href="{% url 'pages:about' %}" class="text-white-50">About Us</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4">

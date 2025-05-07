@@ -1,11 +1,11 @@
-# accounts/models.py
 from django.db import models
 from django.contrib.auth.models import User
-from car_diagnostics.models import Car
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
+    profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True, default='default.jpg')
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     preferred_language = models.CharField(
         max_length=10, 
@@ -16,19 +16,28 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Profile"
 
+# Signal to create a profile automatically when a user is created
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
+
+# This model will be used once car_diagnostics app is implemented
 class UserVehicle(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vehicles')
-    car = models.ForeignKey(Car, on_delete=models.CASCADE)
+    car = models.ForeignKey('car_diagnostics.Car', on_delete=models.CASCADE)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     purchase_date = models.DateField(blank=True, null=True)
     license_plate = models.CharField(max_length=20, blank=True, null=True)
     is_primary = models.BooleanField(default=False)
     
     def __str__(self):
-        return f"{self.user.username}'s {self.car} ({self.nickname})"
-    
+        return f"{self.user.username}'s {self.car} ({self.nickname or 'No nickname'})"
 
-# accounts/models.py (continued)
 class DiagnosticHistory(models.Model):
     vehicle = models.ForeignKey(UserVehicle, on_delete=models.CASCADE, related_name='diagnostics')
     date = models.DateTimeField(auto_now_add=True)
